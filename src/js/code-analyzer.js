@@ -3,8 +3,13 @@ import * as escodegen from 'escodegen';
 
 const parseCode = (codeToParse) => {
     var funcInput = esprima.parseScript(codeToParse, {loc: true});
-    console.log(expTraverse(funcInput));
     return funcInput;
+};
+
+const getDataFromCode = (codeToParse) => {
+    var funcInput = esprima.parseScript(codeToParse, {loc: true});
+    const dataTable = expTraverse(funcInput);
+    return dataTable;
 };
 
 const makeRowExp = (type, line, name, value, condition ='') => {
@@ -15,9 +20,10 @@ const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
 
 const expTraverse = (ast) => {
+    console.log(ast);
     return ast.type == 'Program' ? programTraverse(ast) :
         ast.type == 'FunctionDeclaration' ? functionTraverse(ast) :
-            ast.type == 'variable declaration' ? variableDeclTraverse(ast) :
+            ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :
                 ast.type == 'ExpressionStatement' ? assignmentExpTraverse(ast) :
                     ast.type == 'WhileStatement' ? whileExpTraverse(ast) :
                         ast.type == 'IfStatement' ? ifExpTraverse(ast) :
@@ -41,7 +47,7 @@ const functionTraverse = (ast) => {
 
 const variableDeclTraverse = (ast) => {
     const varDeclRows = ast.declarations.reduce((acc, varDecl) =>
-        acc.concat(makeRowExp(ast.type, varDecl.loc.start.line, varDecl.id.name, '')), []);
+        acc.concat(makeRowExp(ast.type, varDecl.loc.start.line, varDecl.id.name, varDecl.init ? varDecl.init.value : '')), []);
     return varDeclRows;
 };
 
@@ -71,4 +77,4 @@ const returnTraverse = (ast) => {
     const returnExp = makeRowExp(ast.type, ast.loc.start.line, '', escodegen.generate(ast.argument));
     return [returnExp];
 };
-export {parseCode};
+export {parseCode,getDataFromCode};

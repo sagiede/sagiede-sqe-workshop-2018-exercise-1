@@ -1,24 +1,44 @@
 import $ from 'jquery';
-import {parseCode} from './code-analyzer';
+import {parseCode , getDataFromCode} from './code-analyzer';
 import * as esprima from 'esprima';
 
 $(document).ready(function () {
     $('#codeSubmissionButton').click(() => {
         let codeToParse = $('#codePlaceholder').val();
         let parsedCode = parseCode(codeToParse);
-        astTraverse(parsedCode);
+        let codeExpsTable = getDataFromCode(codeToParse);
+        makeTable(codeExpsTable);
         $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
     });
 });
 
-let symbolsList = [];
-symbolsList.push({line : 1 , type : 'tsttype1' , name: 'tstname1' , value : 0});
-symbolsList.push({line : 1 , type : 'tsttype2' , name: 'tstname2' , value : 0});
-
-const astTraverse = (parsedCode) => {
-    if (parsedCode){
-        symbolsList.push();
-    }
+const makeTable = (codeExpsTable) => {
+    let tableHeader = '<tr>\n' +
+        '        <th>Line</th>\n' +
+        '        <th>Type</th>\n' +
+        '        <th>Name</th>\n' +
+        '        <th>Condition</th>\n' +
+        '        <th>Value</th>\n' +
+        '    </tr>'
+    let htmlData = codeExpsTable.reduce( (acc,jsonExp) => acc +
+        '<tr>' +
+        '<td>' +
+        '<span>' + jsonExp.line + '</span>' +
+        '</td>' +
+        '<td>' +
+        '<span>' + jsonExp.type + '</span>' +
+        '</td>' +
+        '<td>' +
+        '<span>' + jsonExp.name + '</span>' +
+        '</td>' +
+        '<td>' +
+        '<span>' + jsonExp.condition + '</span>' +
+        '</td>' +
+        '<td>' +
+        '<span>' + jsonExp.value + '</span>' +
+        '</td>' +
+        '</tr>',tableHeader);
+    $('#expsTable').html(htmlData);
 };
 
 //keet traversing on the tree

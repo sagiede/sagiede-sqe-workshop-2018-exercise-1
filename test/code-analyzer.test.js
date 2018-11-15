@@ -1,7 +1,7 @@
 import assert from 'assert';
-import {parseCode} from '../src/js/code-analyzer';
+import {parseCode,expTraverse,getDataFromCode} from '../src/js/code-analyzer';
 
-describe('The javascript parser', () => {
+describe('aviram Tests', () => {
     it('is parsing an empty function correctly', () => {
         assert.equal(
             JSON.stringify(parseCode('')),
@@ -15,4 +15,11 @@ describe('The javascript parser', () => {
             '{"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":1,"raw":"1"}}],"kind":"let"}],"sourceType":"script"}'
         );
     });
+});
+
+describe('The javascript Traversers', () => {
+    it('empty program', () => {
+        assert.deepEqual(getDataFromCode('')[0], {line: 0, type: 'Program', name: '', condition: '', value: ''});
+    });
+
 });

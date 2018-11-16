@@ -7,9 +7,11 @@ const parseCode = (codeToParse) => {
 };
 
 const getDataFromCode = (codeToParse) => {
+    console.log('he');
     var funcInput = esprima.parseScript(codeToParse, {loc: true});
     const dataTable = expTraverse(funcInput);
     console.log(dataTable);
+    console.log(JSON.stringify(dataTable));
     return dataTable;
 };
 
@@ -21,6 +23,7 @@ const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
 
 const expTraverse = (ast) => {
+    console.log(ast);
     return ast.type == 'Program' ? programTraverse(ast) :
         ast.type == 'FunctionDeclaration' ? functionTraverse(ast) :
             ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :
@@ -35,10 +38,8 @@ const expTraverse = (ast) => {
 };
 
 const programTraverse = (ast) => {
-    const programExp = makeRowExp(ast.type, ast.loc.start.line, '', '');
     const programBodyRows = ast.body.reduce(expConcatReducer, []);
-    console.log(JSON.stringify([programExp, ...programBodyRows]));
-    return [programExp, ...programBodyRows];
+    return [ ...programBodyRows];
 };
 
 const functionTraverse = (ast) => {
@@ -83,7 +84,7 @@ const forExpTraverse = (ast) => {
     const updateRow = expTraverse(ast.update);
     const forBodyRows = ast.body.body.reduce(expConcatReducer, []);
     const forExp = makeRowExp(ast.type, ast.loc.start.line, '', '', conditionRow);
-    return [forExp, ...updateRow, ...assignmentRow, ...forBodyRows];
+    return [forExp, ...assignmentRow,...updateRow,...forBodyRows];
 };
 
 const updateExpTraverse = (ast) => {
@@ -94,4 +95,4 @@ const returnTraverse = (ast) => {
     const returnExp = makeRowExp(ast.type, ast.loc.start.line, '', escodegen.generate(ast.argument));
     return [returnExp];
 };
-export {parseCode, getDataFromCode, expTraverse};
+export {parseCode, getDataFromCode,expTraverse};

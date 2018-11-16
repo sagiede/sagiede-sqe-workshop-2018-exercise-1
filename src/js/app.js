@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import {parseCode , getDataFromCode} from './code-analyzer';
-import * as esprima from 'esprima';
 
 $(document).ready(function () {
     $('#codeSubmissionButton').click(() => {
@@ -19,26 +18,14 @@ const makeTable = (codeExpsTable) => {
         '        <th>Name</th>\n' +
         '        <th>Condition</th>\n' +
         '        <th>Value</th>\n' +
-        '    </tr>'
+        '    </tr>';
     let htmlData = codeExpsTable.reduce( (acc,jsonExp) => acc +
         '<tr>' +
-        '<td>' +
-        '<span>' + jsonExp.line + '</span>' +
-        '</td>' +
-        '<td>' +
-        '<span>' + jsonExp.type + '</span>' +
-        '</td>' +
-        '<td>' +
-        '<span>' + jsonExp.name + '</span>' +
-        '</td>' +
-        '<td>' +
-        '<span>' + jsonExp.condition + '</span>' +
-        '</td>' +
-        '<td>' +
-        '<span>' + jsonExp.value + '</span>' +
-        '</td>' +
+        '<td>' + '<span>' + jsonExp.line + '</span>' + '</td>' +
+        '<td>' + '<span>' + jsonExp.type + '</span>' + '</td>' +
+        '<td>' + '<span>' + jsonExp.name + '</span>' + '</td>' +
+        '<td>' + '<span>' + jsonExp.condition + '</span>' + '</td>' +
+        '<td>' + '<span>' + jsonExp.value + '</span>' + '</td>' +
         '</tr>',tableHeader);
     $('#expsTable').html(htmlData);
 };
-
-//keet traversing on the tree

@@ -7,11 +7,8 @@ const parseCode = (codeToParse) => {
 };
 
 const getDataFromCode = (codeToParse) => {
-    console.log('he');
     var funcInput = esprima.parseScript(codeToParse, {loc: true});
     const dataTable = expTraverse(funcInput);
-    console.log(dataTable);
-    console.log(JSON.stringify(dataTable));
     return dataTable;
 };
 
@@ -23,7 +20,6 @@ const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
 
 const expTraverse = (ast) => {
-    console.log(ast);
     return ast.type == 'Program' ? programTraverse(ast) :
         ast.type == 'FunctionDeclaration' ? functionTraverse(ast) :
             ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :

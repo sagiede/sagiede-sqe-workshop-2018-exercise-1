@@ -2,14 +2,12 @@ import * as esprima from 'esprima';
 import * as escodegen from 'escodegen';
 
 const parseCode = (codeToParse) => {
-    var funcInput = esprima.parseScript(codeToParse);
-    return funcInput;
+    return esprima.parseScript(codeToParse);
 };
 
 const getDataFromCode = (codeToParse) => {
-    var funcInput = esprima.parseScript(codeToParse, {loc: true});
-    const dataTable = expTraverse(funcInput);
-    return dataTable;
+    let funcInput = esprima.parseScript(codeToParse, {loc: true});
+    return expTraverse(funcInput);
 };
 
 const makeRowExp = (type, line, name, value, condition = '') => {
@@ -21,21 +19,33 @@ const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
 const expTraverse = (ast) => {
     return ast.type == 'Program' ? programTraverse(ast) :
-        ast.type == 'FunctionDeclaration' ? functionTraverse(ast) :
-            ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :
-                ast.type == 'ExpressionStatement' ? expTraverse(ast.expression) :
-                    ast.type == 'AssignmentExpression' ? assignmentExpTraverse(ast) :
-                        ast.type == 'UpdateExpression' ? updateExpTraverse(ast) :
-                            ast.type == 'WhileStatement' ? whileExpTraverse(ast) :
-                                ast.type == 'IfStatement' ? ifExpTraverse(ast) :
-                                    ast.type == 'ReturnStatement' ? returnTraverse(ast) :
-                                        ast.type == 'ForStatement' ? forExpTraverse(ast) : [];
+        ast.type == 'FunctionDeclaration' ? functionTraverse(ast) : loopAndConditionTraverse(ast);
+
+};
+
+const loopAndConditionTraverse = (ast) => {
+    return ast.type == 'WhileStatement' ? whileExpTraverse(ast) :
+        ast.type == 'IfStatement' ? ifExpTraverse(ast) :
+            ast.type == 'ForStatement' ? forExpTraverse(ast) : simpleTraverse(ast);
+
+};
+
+const simpleTraverse = (ast) => {
+    return ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :
+        ast.type == 'ReturnStatement' ? returnTraverse(ast) : expressionTypeTraverse(ast);
+
+};
+
+const expressionTypeTraverse = (ast) => {
+    return ast.type == 'ExpressionStatement' ? expTraverse(ast.expression) :
+        ast.type == 'AssignmentExpression' ? assignmentExpTraverse(ast) :
+            ast.type == 'UpdateExpression' ? updateExpTraverse(ast) : [];
 
 };
 
 const programTraverse = (ast) => {
     const programBodyRows = ast.body.reduce(expConcatReducer, []);
-    return [ ...programBodyRows];
+    return [...programBodyRows];
 };
 
 const functionTraverse = (ast) => {
@@ -47,9 +57,8 @@ const functionTraverse = (ast) => {
 };
 
 const variableDeclTraverse = (ast) => {
-    const varDeclRows = ast.declarations.reduce((acc, varDecl) =>
+    return ast.declarations.reduce((acc, varDecl) =>
         acc.concat(makeRowExp(ast.type, varDecl.loc.start.line, varDecl.id.name, varDecl.init ? varDecl.init.value : '')), []);
-    return varDeclRows;
 };
 
 const assignmentExpTraverse = (ast) => {
@@ -80,7 +89,7 @@ const forExpTraverse = (ast) => {
     const updateRow = expTraverse(ast.update);
     const forBodyRows = ast.body.body.reduce(expConcatReducer, []);
     const forExp = makeRowExp(ast.type, ast.loc.start.line, '', '', conditionRow);
-    return [forExp, ...assignmentRow,...updateRow,...forBodyRows];
+    return [forExp, ...assignmentRow, ...updateRow, ...forBodyRows];
 };
 
 const updateExpTraverse = (ast) => {
@@ -91,4 +100,4 @@ const returnTraverse = (ast) => {
     const returnExp = makeRowExp(ast.type, ast.loc.start.line, '', escodegen.generate(ast.argument));
     return [returnExp];
 };
-export {parseCode, getDataFromCode,expTraverse};
+export {parseCode, getDataFromCode, expTraverse};

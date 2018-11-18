@@ -9,7 +9,7 @@ describe('parser Tests', () => {
         );
     });
 
-    it('is parsing a simple variable declaration correctly', () => {
+    it('is parsing a simple Identifier correctly', () => {
         assert.equal(
             JSON.stringify(parseCode('let a = 1;')),
             '{"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":1,"raw":"1"}}],"kind":"let"}],"sourceType":"script"}'
@@ -65,7 +65,7 @@ describe('The javascript Traversers', () => {
             {'line': 5, 'type': 'AssignmentExpression', 'name': 'i', 'condition': '', 'value': 'i + 5'}]);
     });
 
-    it('IfStatement', () => {
+    it('IfElseStatement', () => {
         assert.deepEqual(getDataFromCode('if (X < V[mid])\n' +
             '            high = mid - 1;\n' +
             '        else if (X > V[mid])\n' +
@@ -79,13 +79,34 @@ describe('The javascript Traversers', () => {
             {'line':6,'type':'AssignmentExpression','name':'low','condition':'','value':'mid - 1'}]);
     });
 
+    it('regularIfStatement', () => {
+        assert.deepEqual(getDataFromCode('if (X < V[mid])\n' +
+            '            low = mid - 1;'),
+        [{'line':1,'type':'IfStatement','name':'','condition':'X < V[mid]','value':''},
+            {'line':2,'type':'AssignmentExpression','name':'low','condition':'','value':'mid - 1'}]);
+    });
+
+    it('IfBlockStatement', () => {
+        assert.deepEqual(getDataFromCode('if (X < V[mid])\n' +
+            '            high = mid - 1;\n' +
+            '        else if (X > V[mid])\n' +
+            '            {low = mid + 1;}\n' +
+            '        else\n' +
+            '            {low = mid - 1;}'),
+        [{'line':1,'type':'IfStatement','name':'','condition':'X < V[mid]','value':''},
+            {'line':2,'type':'AssignmentExpression','name':'high','condition':'','value':'mid - 1'},
+            {'line':3,'type':'IfStatement','name':'','condition':'X > V[mid]','value':''},
+            {'line':4,'type':'AssignmentExpression','name':'low','condition':'','value':'mid + 1'},
+            {'line':6,'type':'AssignmentExpression','name':'low','condition':'','value':'mid - 1'}]);
+    });
+
     it('function and return statement', () => {
         assert.deepEqual(getDataFromCode('function binarySearch(x,n){\n' +
             '    return n;\n' +
             '}'),
         [{'line':1,'type':'FunctionDeclaration','name':'binarySearch','condition':'','value':''},
-            {'line':1,'type':'variable declaration','name':'x','condition':'','value':''},
-            {'line':1,'type':'variable declaration','name':'n','condition':'','value':''},
+            {'line':1,'type':'Identifier','name':'x','condition':'','value':''},
+            {'line':1,'type':'Identifier','name':'n','condition':'','value':''},
             {'line':2,'type':'ReturnStatement','name':'','condition':'','value':'n'}]);
     });
 
@@ -124,9 +145,9 @@ const fullFuncString = 'function binarySearch(X, V, n){\n' +
 describe('full program Tests', () => {
     it('checking program that includes all exps ', () => {assert.deepEqual(getDataFromCode(fullFuncString),
         [{'line':1,'type':'FunctionDeclaration','name':'binarySearch','condition':'','value':''},
-            {'line':1,'type':'variable declaration','name':'X','condition':'','value':''},
-            {'line':1,'type':'variable declaration','name':'V','condition':'','value':''},
-            {'line':1,'type':'variable declaration','name':'n','condition':'','value':''},
+            {'line':1,'type':'Identifier','name':'X','condition':'','value':''},
+            {'line':1,'type':'Identifier','name':'V','condition':'','value':''},
+            {'line':1,'type':'Identifier','name':'n','condition':'','value':''},
             {'line':2,'type':'VariableDeclaration','name':'low','condition':'','value':''},
             {'line':2,'type':'VariableDeclaration','name':'high','condition':'','value':''},
             {'line':2,'type':'VariableDeclaration','name':'mid','condition':'','value':''},

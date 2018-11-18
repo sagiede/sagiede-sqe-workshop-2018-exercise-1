@@ -6,6 +6,7 @@ const parseCode = (codeToParse) => {
 };
 
 const getDataFromCode = (codeToParse) => {
+    initTraverseHandler();
     let funcInput = esprima.parseScript(codeToParse, {loc: true});
     return expTraverse(funcInput);
 };
@@ -14,34 +15,19 @@ const makeRowExp = (type, line, name, value, condition = '') => {
     return {line: line, type: type, name: name, condition: condition, value: value};
 };
 
+let traverseHandler = {};
+
 const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
-
 const expTraverse = (ast) => {
-    return ast.type == 'Program' ? programTraverse(ast) :
-        ast.type == 'FunctionDeclaration' ? functionTraverse(ast) : loopAndConditionTraverse(ast);
-
+    try {
+        return traverseHandler[ast.type](ast);
+    }
+    catch (err){
+        return [];
+    }
 };
 
-const loopAndConditionTraverse = (ast) => {
-    return ast.type == 'WhileStatement' ? whileExpTraverse(ast) :
-        ast.type == 'IfStatement' ? ifExpTraverse(ast) :
-            ast.type == 'ForStatement' ? forExpTraverse(ast) : simpleTraverse(ast);
-
-};
-
-const simpleTraverse = (ast) => {
-    return ast.type == 'VariableDeclaration' ? variableDeclTraverse(ast) :
-        ast.type == 'ReturnStatement' ? returnTraverse(ast) : expressionTypeTraverse(ast);
-
-};
-
-const expressionTypeTraverse = (ast) => {
-    return ast.type == 'ExpressionStatement' ? expTraverse(ast.expression) :
-        ast.type == 'AssignmentExpression' ? assignmentExpTraverse(ast) :
-            ast.type == 'UpdateExpression' ? updateExpTraverse(ast) : [];
-
-};
 
 const programTraverse = (ast) => {
     const programBodyRows = ast.body.reduce(expConcatReducer, []);
@@ -50,10 +36,15 @@ const programTraverse = (ast) => {
 
 const functionTraverse = (ast) => {
     const params = ast.params.map((param) =>
-        makeRowExp('variable declaration', param.loc.start.line, param.name, ''));
+        makeRowExp(param.type, param.loc.start.line, param.name, ''));
     const functionExp = makeRowExp(ast.type, ast.loc.start.line, ast.id.name, '');
-    const funcBody = ast.body.body.reduce(expConcatReducer, []);
+    const funcBody = expTraverse(ast.body);
     return [functionExp, ...params, ...funcBody];
+};
+
+const blockTraverse = (ast) => {
+    const funcBody = ast.body.reduce(expConcatReducer, []);
+    return [ ...funcBody];
 };
 
 const variableDeclTraverse = (ast) => {
@@ -70,7 +61,7 @@ const assignmentExpTraverse = (ast) => {
 
 const whileExpTraverse = (ast) => {
     const condition = escodegen.generate(ast.test);
-    const whileBodyRows = ast.body.body.reduce(expConcatReducer, []);
+    const whileBodyRows = expTraverse(ast.body);
     const whileExp = makeRowExp(ast.type, ast.loc.start.line, '', '', condition);
     return [whileExp, ...whileBodyRows];
 };
@@ -87,7 +78,7 @@ const forExpTraverse = (ast) => {
     const assignmentRow = expTraverse(ast.init);
     const conditionRow = escodegen.generate(ast.test);
     const updateRow = expTraverse(ast.update);
-    const forBodyRows = ast.body.body.reduce(expConcatReducer, []);
+    const forBodyRows = expTraverse(ast.body);
     const forExp = makeRowExp(ast.type, ast.loc.start.line, '', '', conditionRow);
     return [forExp, ...assignmentRow, ...updateRow, ...forBodyRows];
 };
@@ -100,4 +91,24 @@ const returnTraverse = (ast) => {
     const returnExp = makeRowExp(ast.type, ast.loc.start.line, '', escodegen.generate(ast.argument));
     return [returnExp];
 };
+
+const genExpTraverse = (ast) => {
+    return expTraverse(ast.expression);
+};
+
+const initTraverseHandler =  () => {
+    traverseHandler['Program'] = programTraverse;
+    traverseHandler['FunctionDeclaration'] = functionTraverse;
+    traverseHandler['WhileStatement'] = whileExpTraverse;
+    traverseHandler['IfStatement'] = ifExpTraverse;
+    traverseHandler['ForStatement'] = forExpTraverse;
+    traverseHandler['VariableDeclaration'] = variableDeclTraverse;
+    traverseHandler['ReturnStatement'] = returnTraverse;
+    traverseHandler['ExpressionStatement'] = genExpTraverse;
+    traverseHandler['AssignmentExpression'] = assignmentExpTraverse;
+    traverseHandler['UpdateExpression'] = updateExpTraverse;
+    traverseHandler['BlockStatement'] = blockTraverse;
+};
+
+
 export {parseCode, getDataFromCode, expTraverse};

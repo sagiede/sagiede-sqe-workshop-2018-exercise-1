@@ -20,6 +20,7 @@ let traverseHandler = {};
 const expConcatReducer = (acc, exp) => acc.concat(expTraverse(exp));
 
 const expTraverse = (ast) => {
+    console.log(ast);
     try {
         return traverseHandler[ast.type](ast);
     }
@@ -49,13 +50,14 @@ const blockTraverse = (ast) => {
 
 const variableDeclTraverse = (ast) => {
     return ast.declarations.reduce((acc, varDecl) =>
-        acc.concat(makeRowExp(ast.type, varDecl.loc.start.line, varDecl.id.name, varDecl.init ? varDecl.init.value : '')), []);
+        acc.concat(makeRowExp(ast.type, varDecl.loc.start.line, varDecl.id.name, varDecl.init ? escodegen.generate(varDecl.init) : '')), []);
 };
 
 const assignmentExpTraverse = (ast) => {
     const rightExpValue = escodegen.generate(ast.right);
+    const leftExpValue = escodegen.generate(ast.left);
     const assignmentExp = makeRowExp(ast.type,
-        ast.loc.start.line, ast.left.name, rightExpValue);
+        ast.loc.start.line, leftExpValue, rightExpValue);
     return [assignmentExp];
 };
 
